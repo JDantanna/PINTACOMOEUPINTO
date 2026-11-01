@@ -1,0 +1,14 @@
+# Generated previews, packages and local Photoshop test output
+preview.png
+*.zip
+*.ccx
+*.zxp
+photoshop-smoke-result.txt
+
+# Local dependencies, logs and settings
+node_modules/
+*.log
+.env
+.env.*
+.DS_Store
+Thumbs.db
