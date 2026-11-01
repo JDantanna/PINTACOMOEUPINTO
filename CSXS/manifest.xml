@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ExtensionManifest Version="7.0" ExtensionBundleId="br.pinta.panel.cep" ExtensionBundleVersion="0.1.0" ExtensionBundleName="Pinta Presets">
- <ExtensionList><Extension Id="br.pinta.panel.cep" Version="0.1.0"/></ExtensionList>
+<ExtensionManifest Version="7.0" ExtensionBundleId="br.pinta.panel.cep" ExtensionBundleVersion="0.2.0" ExtensionBundleName="PINTACOMEUPINTO">
+ <ExtensionList><Extension Id="br.pinta.panel.cep" Version="0.2.0"/></ExtensionList>
  <ExecutionEnvironment><HostList><Host Name="PHXS" Version="[21.0,21.9]"/><Host Name="PHSP" Version="[21.0,21.9]"/></HostList><LocaleList><Locale Code="All"/></LocaleList><RequiredRuntimeList><RequiredRuntime Name="CSXS" Version="9.0"/></RequiredRuntimeList></ExecutionEnvironment>
- <DispatchInfoList><Extension Id="br.pinta.panel.cep"><DispatchInfo><Resources><MainPath>./index.html</MainPath><ScriptPath>./host/cep.jsx</ScriptPath></Resources><Lifecycle><AutoVisible>true</AutoVisible></Lifecycle><UI><Type>Panel</Type><Menu>Pinta Presets</Menu><Geometry><Size><Width>300</Width><Height>580</Height></Size><MinSize><Width>260</Width><Height>360</Height></MinSize></Geometry></UI></DispatchInfo></Extension></DispatchInfoList>
+ <DispatchInfoList><Extension Id="br.pinta.panel.cep"><DispatchInfo><Resources><MainPath>./index.html</MainPath><ScriptPath>./host/cep.jsx</ScriptPath></Resources><Lifecycle><AutoVisible>true</AutoVisible></Lifecycle><UI><Type>Panel</Type><Menu>PINTACOMEUPINTO</Menu><Geometry><Size><Width>300</Width><Height>540</Height></Size><MinSize><Width>260</Width><Height>260</Height></MinSize></Geometry></UI></DispatchInfo></Extension></DispatchInfoList>
 </ExtensionManifest>

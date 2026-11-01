@@ -1,5 +1,8 @@
 # Generated previews, packages and local Photoshop test output
 preview.png
+dist/
+install-local.json
+.reference/
 *.zip
 *.ccx
 *.zxp

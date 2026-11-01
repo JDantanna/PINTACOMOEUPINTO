@@ -12,6 +12,21 @@ test('UXP executes inside modal scope sequentially and stops on descriptor error
 test('CEP bridge uses serialized data, propagates errors and handles quoted action names',async()=>{
  const p={id:'a',name:'Teste',type:'action',set:'Set',action:'x"); alert(1); //'};let script;
  const h=load({__adobe_cep__:{evalScript:(s,cb)=>{script=s;cb('OK');}}});await h.apply(p);
- let received;vm.runInNewContext(script,{pintaApply:x=>{received=x;}});assert.equal(received.action,p.action);
+ let received;vm.runInNewContext(script,{pintaApply:x=>{received=x;}});assert.equal(received.preset.action,p.action);
  const bad=load({__adobe_cep__:{evalScript:(s,cb)=>cb('ERROR: ausente')}});await assert.rejects(()=>bad.apply(p),/ausente/);
 });
+test('UXP capture reads the active brush options and foreground color as a restorable shortcut',async()=>{
+ const capturedOptions={_obj:'currentToolOptions',brush:{diameter:{_unit:'pixelsUnit',_value:37},hardness:82,spacing:14},opacity:{_unit:'percentUnit',_value:63},flow:{_unit:'percentUnit',_value:41},smoothing:28};
+ const queries=[];let modal=false;
+ const ps={app:{documents:[{}]},core:{executeAsModal:async fn=>{modal=true;try{return await fn();}finally{modal=false;}}},action:{batchPlay:async cmds=>{assert.ok(modal);const property=cmds[0]._target[0]._property;queries.push(property);if(property==='tool')return [{tool:{_enum:'paintbrushTool'}}];if(property==='currentToolOptions')return [{currentToolOptions:capturedOptions}];if(property==='foregroundColor')return [{foregroundColor:{red:231,grain:116,blue:60}}];throw Error('Unexpected descriptor');}}};
+ const h=load({require:()=>ps}),p=await h.capture();
+ assert.deepEqual(queries,['tool','currentToolOptions','foregroundColor']);assert.equal(p.type,'brush');assert.equal(p.size,37);assert.equal(p.opacity,63);assert.equal(p.flow,41);assert.equal(p.color,'#e7743c');assert.deepEqual(p.captured.options,capturedOptions);
+ const cmds=core.commands(p);assert.deepEqual(cmds[1].to,capturedOptions);assert.equal(cmds[2].to.diameter._value,37);assert.equal(cmds[3].to.opacity._value,63);assert.equal(cmds[4].to.grain,116);
+});
+test('capture rejects another tool and refuses a second concurrent host operation',async()=>{
+ let release,entered;const enteredPromise=new Promise(r=>entered=r),gate=new Promise(r=>release=r);
+ const ps={app:{documents:[{}]},core:{executeAsModal:async fn=>fn()},action:{batchPlay:async cmds=>{const property=cmds[0]._target[0]._property;if(property==='tool'){entered();await gate;return [{tool:{_enum:'paintbrushTool'}}];}if(property==='currentToolOptions')return [{currentToolOptions:{_obj:'currentToolOptions',brush:{diameter:20},opacity:100,flow:100}}];return [{foregroundColor:{red:0,grain:0,blue:0}}];}}};
+ const h=load({require:()=>ps}),first=h.capture();await enteredPromise;await assert.rejects(()=>h.capture(),/operação atual/);release();await first;
+ ps.action.batchPlay=async()=>[{tool:{_enum:'moveTool'}}];await assert.rejects(()=>h.capture(),/pincel ou a borracha/);
+});
+
