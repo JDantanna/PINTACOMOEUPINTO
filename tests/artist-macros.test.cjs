@@ -1,0 +1,6 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),core=require('../src/core');
+test('Color Dodge clipped layer persists and CEP creates, configures and clips the new layer',()=>{
+ let raw=null,created,flipped;const s=new core.Store({getItem:()=>raw,setItem:(k,v)=>raw=v});s.save({id:'dodge',name:'Dodge recortado',type:'layer',layerName:'Luz',layerOpacity:67,blendMode:'colorDodge',clipped:true});const p=s.items.find(p=>p.id==='dodge');assert.equal(core.decode(raw).find(p=>p.id==='dodge').clipped,true);
+ const ctx={ActionDescriptor:function(){},ActionReference:function(){},File:()=>({}),$:{fileName:'host/cep.jsx'},app:{documents:[{}],activeDocument:{artLayers:{add:()=>created={}},flipCanvas:d=>{flipped=d;}}},BlendMode:{COLORDODGE:'dodge'},Direction:{HORIZONTAL:'horizontal'}};vm.runInNewContext(fs.readFileSync('host/cep.jsx','utf8'),ctx);assert.equal(ctx.pintaApply({preset:p}),'OK');assert.deepEqual(created,{name:'Luz',opacity:67,blendMode:'dodge',grouped:true});const commands=core.commands(p);assert.equal(commands[0].using.mode._value,'colorDodge');assert.equal(commands[1]._obj,'groupEvent');assert.equal(ctx.pintaApply({preset:{type:'menu',command:'flipCanvasHorizontal'}}),'OK');assert.equal(flipped,'horizontal');
+});
+

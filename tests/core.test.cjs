@@ -22,6 +22,6 @@ test('storage write failure leaves current state untouched; corrupt storage is p
 });
 test('descriptors select correct tools, units, RGB and installed actions',()=>{
  const b=core.commands(core.defaults()[0]);assert.equal(b[0]._target[0]._ref,'paintbrushTool');assert.equal(b[1].to.diameter._value,8);assert.equal(b[2].to.flow._value,100);assert.deepEqual(b[3].to,{_obj:'RGBColor',red:37,grain:39,blue:53});
- const e=core.commands(core.defaults()[2]);assert.equal(e[0]._target[0]._ref,'eraser');assert.equal(e.length,3);
+ const e=core.commands(core.defaults()[2]);assert.equal(e[0]._target[0]._ref,'eraserTool');assert.equal(e.length,3);
  assert.deepEqual(core.commands({id:'a',name:'Rodar',type:'action',set:'Meu conjunto',action:'Ação "1"'})[0]._target,[{_ref:'action',_name:'Ação "1"'},{_ref:'actionSet',_name:'Meu conjunto'}]);
 });

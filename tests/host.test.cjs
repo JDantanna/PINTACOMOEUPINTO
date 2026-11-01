@@ -18,15 +18,30 @@ test('CEP bridge uses serialized data, propagates errors and handles quoted acti
 test('UXP capture reads the active brush options and foreground color as a restorable shortcut',async()=>{
  const capturedOptions={_obj:'currentToolOptions',brush:{diameter:{_unit:'pixelsUnit',_value:37},hardness:82,spacing:14},opacity:{_unit:'percentUnit',_value:63},flow:{_unit:'percentUnit',_value:41},smoothing:28};
  const queries=[];let modal=false;
- const ps={app:{documents:[{}]},core:{executeAsModal:async fn=>{modal=true;try{return await fn();}finally{modal=false;}}},action:{batchPlay:async cmds=>{assert.ok(modal);const property=cmds[0]._target[0]._property;queries.push(property);if(property==='tool')return [{tool:{_enum:'paintbrushTool'}}];if(property==='currentToolOptions')return [{currentToolOptions:capturedOptions}];if(property==='foregroundColor')return [{foregroundColor:{red:231,grain:116,blue:60}}];throw Error('Unexpected descriptor');}}};
+ const ps={app:{documents:[{}]},core:{executeAsModal:async fn=>{modal=true;try{return await fn();}finally{modal=false;}}},action:{batchPlay:async cmds=>{assert.ok(modal);if(cmds[0]._obj==='make'){assert.equal(cmds[0]._target[0]._ref,'toolPreset');assert.equal(cmds[0].using._property,'currentToolOptions');return [{_obj:'make'}];}const property=cmds[0]._target[0]._property;queries.push(property);if(property==='tool')return [{tool:{_enum:'paintbrushTool'}}];if(property==='currentToolOptions')return [{currentToolOptions:capturedOptions}];if(property==='foregroundColor')return [{foregroundColor:{red:231,grain:116,blue:60}}];throw Error('Unexpected descriptor');}}};
  const h=load({require:()=>ps}),p=await h.capture();
  assert.deepEqual(queries,['tool','currentToolOptions','foregroundColor']);assert.equal(p.type,'brush');assert.equal(p.size,37);assert.equal(p.opacity,63);assert.equal(p.flow,41);assert.equal(p.color,'#e7743c');assert.deepEqual(p.captured.options,capturedOptions);
- const cmds=core.commands(p);assert.deepEqual(cmds[1].to,capturedOptions);assert.equal(cmds[2].to.diameter._value,37);assert.equal(cmds[3].to.opacity._value,63);assert.equal(cmds[4].to.grain,116);
+ const cmds=core.commands(p);assert.equal(p.nativePreset,true);assert.equal(cmds[1]._target[0]._name,p.presetName);assert.equal(cmds[1]._target[0]._ref,'toolPreset');assert.equal(cmds[2].to.diameter._value,37);assert.equal(cmds[3].to.opacity._value,63);assert.equal(cmds[4].to.grain,116);
 });
 test('capture rejects another tool and refuses a second concurrent host operation',async()=>{
  let release,entered;const enteredPromise=new Promise(r=>entered=r),gate=new Promise(r=>release=r);
  const ps={app:{documents:[{}]},core:{executeAsModal:async fn=>fn()},action:{batchPlay:async cmds=>{const property=cmds[0]._target[0]._property;if(property==='tool'){entered();await gate;return [{tool:{_enum:'paintbrushTool'}}];}if(property==='currentToolOptions')return [{currentToolOptions:{_obj:'currentToolOptions',brush:{diameter:20},opacity:100,flow:100}}];return [{foregroundColor:{red:0,grain:0,blue:0}}];}}};
  const h=load({require:()=>ps}),first=h.capture();await enteredPromise;await assert.rejects(()=>h.capture(),/operação atual/);release();await first;
- ps.action.batchPlay=async()=>[{tool:{_enum:'moveTool'}}];await assert.rejects(()=>h.capture(),/pincel ou a borracha/);
+ ps.action.batchPlay=async()=>[{tool:{_enum:'invalid;tool'}}];await assert.rejects(()=>h.capture(),/ainda/);
 });
 
+test('unsupported native preset creation keeps the captured tool descriptor',async()=>{
+ const ps={app:{documents:[{}]},core:{executeAsModal:async fn=>fn()},action:{batchPlay:async cmds=>{
+  if(cmds[0]._obj==='make')return [{_obj:'error',message:'Não foi possível salvar a ponta'}];
+  const key=cmds[0]._target[0]._property;
+  if(key==='tool')return [{tool:'paintbrushTool'}];
+  if(key==='currentToolOptions')return [{currentToolOptions:{_obj:'currentToolOptions',brush:{diameter:30},opacity:75,flow:22}}];
+  return [{foregroundColor:{red:0,grain:0,blue:0}}];
+ }}};
+ const p=await load({require:()=>ps}).capture();assert.equal(p.nativePreset,false);assert.equal(p.captured.options.flow,22);
+});
+test('discardCapture deletes only an internally named native preset',async()=>{
+ let deleted=0;const ps={core:{executeAsModal:async fn=>fn()},action:{batchPlay:async commands=>{assert.equal(commands[0]._obj,'delete');assert.equal(commands[0]._target[0]._name,'__PKP_p123');deleted++;return [{_obj:'delete'}];}}};
+ const h=load({require:()=>ps});await h.discardCapture({nativePreset:true,presetName:'Outro preset'});assert.equal(deleted,0);
+ await h.discardCapture({nativePreset:true,presetName:'__PKP_p123'});assert.equal(deleted,1);
+});
