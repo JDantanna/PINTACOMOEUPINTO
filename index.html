@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pinta • Presets</title><link rel="stylesheet" href="style.css"></head>
+<body><main>
+<header><div><span class="eyebrow">SEU ESTÚDIO, EM UM CLIQUE</span><h1>pinta<span>●</span></h1></div><span id="mode" class="badge"></span></header>
+<p class="intro">Menos ajustes. Mais criação.</p>
+<div class="toolbar"><h2>Seus presets</h2><button id="add">+ Novo</button></div>
+<label class="filter">Mostrar<select id="filter"><option value="all">Todos os presets</option><option value="brush">Pincéis</option><option value="eraser">Borrachas</option><option value="action">Ações</option></select></label>
+<div id="list"></div>
+<p id="status" role="status" aria-live="polite"></p>
+<section id="editor" hidden><h2 id="editorTitle">Novo preset</h2><form id="form">
+<label>Nome<input id="name" maxlength="60" required></label>
+<label>Ferramenta<select id="type"><option value="brush">Pincel</option><option value="eraser">Borracha</option><option value="action">Ação do Photoshop</option></select></label>
+<label>Ícone do botão<select id="icon"><option value="auto">Automático pela ferramenta</option><option value="pen">✎ Pincel</option><option value="eraser">▱ Borracha</option><option value="star">★ Estrela</option><option value="circle">● Círculo</option><option value="play">▶ Executar</option></select></label>
+<div id="paintFields"><label>Tamanho (px)<input id="size" type="number" min="1" max="5000" step="any" value="20"></label><label id="colorLabel">Cor (#RRGGBB)<input id="color" value="#6962d8" pattern="#[a-fA-F0-9]{6}" maxlength="7"></label><div class="columns"><label>Opacidade (%)<input id="opacity" type="number" min="0" max="100" step="any" value="100"></label><label>Flow (%)<input id="flow" type="number" min="0" max="100" step="any" value="100"></label></div></div>
+<div id="actionFields" hidden><label>Conjunto de ações<input id="set" maxlength="120"></label><label>Nome da ação<input id="action" maxlength="120"></label><p class="hint">Use os nomes exatos do painel Ações. A ação precisa estar instalada e pode alterar o documento.</p></div>
+<div class="buttons"><button type="submit" class="primary">Salvar preset</button><button type="button" id="cancel">Cancelar</button></div></form></section>
+<section id="backup"><h2>Backup dos presets</h2><div class="buttons"><button id="export">Gerar backup</button><button id="import">Importar texto</button></div><label>Texto do backup<textarea id="backupText" rows="3" placeholder="Gere um backup ou cole o JSON aqui."></textarea></label><p class="hint">A importação substitui a lista atual. Salve uma cópia deste texto em um arquivo.</p></section>
+<footer>PINCEIS · BORRACHAS · AÇÕES <span>0.1 / MVP</span></footer>
+</main><script src="src/core.js"></script><script src="src/host.js"></script><script src="src/ui.js"></script></body></html>
