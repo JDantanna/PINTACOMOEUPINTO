@@ -1,6 +1,6 @@
 (function(root){
 'use strict';
-var VERSION='0.12.0',URL='https://raw.githubusercontent.com/JDantanna/PINTACOMOEUPINTO/main/releases/cep-latest.json';
+var VERSION='0.13.0',URL='https://raw.githubusercontent.com/JDantanna/PINTACOMOEUPINTO/main/releases/cep-latest.json';
 function newer(a,b){var x=a.split('.').map(Number),y=b.split('.').map(Number);for(var i=0;i<3;i++){if(x[i]!==y[i])return x[i]>y[i];}return false;}
 function validate(pkg,crypto){
  if(!pkg||pkg.id!=='br.pinta.panel.cep'||!/^\d+\.\d+\.\d+$/.test(pkg.version)||!Array.isArray(pkg.files)||pkg.files.length>100)throw Error('Pacote de atualização inválido.');

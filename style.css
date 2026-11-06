@@ -90,3 +90,11 @@ summary{cursor:pointer;padding:8px 0}
 
 .freeLayout #board{display:block;min-width:100%;min-height:100%}.freeLayout #board .tile{position:absolute;max-width:none}.freeLayout .tile.dragging{z-index:5}.locked .tileButton{cursor:pointer}.locked .resizeHandle{display:none}#lockLayout[aria-pressed=true]{background:var(--control-bg);border-color:var(--focus)}
 #macroChooser{position:absolute;inset:0;z-index:40;overflow:auto;margin:0;background:var(--panel-bg)}.recipeList{display:flex;flex-direction:column;gap:8px}.recipeList button{text-align:left;min-height:36px;white-space:normal}.quickbar{flex-wrap:wrap}#newMacro,#capture{font-size:11px}
+/* Compact panel feedback and accessible secondary controls. */
+.quickbar button{min-width:28px;min-height:28px}.quickbar button:focus-visible{outline:2px solid var(--focus)}
+#status:not(:empty){position:absolute;left:4px;right:4px;bottom:28px;width:auto;height:auto;clip:auto;max-height:35%;overflow:auto;padding:7px;background:var(--panel-bg);border:1px solid var(--panel-border);z-index:45;font-size:11px;line-height:1.4;cursor:pointer}
+#status.error{border-color:#ec5b62}.lightTheme .actionIcon,.lightTheme .quickbar img{filter:brightness(.25)}
+.imageTile .actionIcon{width:100%;height:100%;max-height:100%;object-fit:contain}.lightTheme .imageTile .actionIcon{filter:none}
+#thumbnailPaste{border:1px dashed var(--panel-secondary);padding:12px;min-height:44px;cursor:text}#thumbnailPaste:focus{outline:2px solid var(--focus)}
+#restorePreview{padding:8px;border:1px solid var(--focus);margin:8px 0}#contextMenu .buttons{flex-wrap:wrap}
+@media(max-width:240px){.sectionTitle{flex-wrap:wrap}#contextMenu{top:4px;max-height:calc(100% - 8px)}.buttons button{flex:1 1 100%}}

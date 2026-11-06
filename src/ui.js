@@ -9,7 +9,7 @@
       if(!color)return;
       function hex(n){return ('0'+Math.max(0,Math.min(255,Math.round(n))).toString(16)).slice(-2);}
       function shade(delta){return '#'+hex(color.red+delta)+hex(color.green+delta)+hex(color.blue+delta);}
-      var rootStyle=document.documentElement.style;
+      document.documentElement.classList.toggle('lightTheme',color.red>145);var rootStyle=document.documentElement.style;
       rootStyle.setProperty('--panel-bg',shade(0));rootStyle.setProperty('--panel-border',shade(-30));rootStyle.setProperty('--control-bg',shade(12));
       rootStyle.setProperty('--panel-text',color.red>145?'#202020':'#f0f0f0');rootStyle.setProperty('--panel-secondary',color.red>145?'#555':'#b5b5b5');
       if(skin.baseFontSize)rootStyle.setProperty('--font-size',skin.baseFontSize+'px');
@@ -56,7 +56,7 @@
       var button=makeButton('',describe(p));button.className='tileButton';button.setAttribute('aria-label',(editing?'Selecionar ':'Ativar ')+p.name);button.disabled=busy;
       if(p.appearance==='stroke'&&(p.type==='brush'||p.type==='eraser')){var preview=document.createElement('span');preview.className='brushPreview';preview.style.backgroundColor=p.type==='eraser'?'#dddddd':p.color;preview.style.height=Math.max(2,Math.min(16,p.size/8))+'px';preview.style.opacity=Math.max(.15,p.opacity/100);button.appendChild(preview);button.title+=' · preview aproximado';}
       else if(p.appearance!=='text'){var image=document.createElement('img');image.src=p.appearance==='image'&&p.image?p.image:'icons/'+({pen:'brush',eraser:'eraser',play:'action',star:'star',circle:'circle'}[p.icon]||(p.type==='tool'&&(p.tool==='eraserTool'||p.tool==='eraser')?'eraser':p.type))+'.svg';image.className='actionIcon';image.alt='';image.draggable=false;button.appendChild(image);}
-      if((editing&&store.state.settings.showNames)||p.appearance==='text'){var label=document.createElement('span');label.className='tileName';label.textContent=p.name;button.appendChild(label);}
+      if(store.state.settings.showNames||p.appearance==='text'){var label=document.createElement('span');label.className='tileName';label.textContent=p.name;button.appendChild(label);}
       button.onclick=function(e){
         if(Date.now()<suppressClick||busy)return;
         
@@ -65,9 +65,9 @@
         activate(p);
       };
       
-      button.oncontextmenu=function(e){e.preventDefault();if(busy)return;selected=[p.id];draft=Object.assign({},p);el('contextKey').value=p.shortcut||'';el('contextColor').value=p.background;el('contextAppearance').value=['icon','stroke','image'].indexOf(p.appearance)>=0?p.appearance:'icon';el('shortcutInfo').textContent='';el('contextWidth').disabled=store.state.settings.locked;el('contextHeight').disabled=store.state.settings.locked;el('contextWidth').value=p.width;el('contextHeight').value=p.height;updateImage();el('contextMenu').hidden=false;};
+      button.oncontextmenu=function(e){e.preventDefault();if(busy)return;selected=[p.id];draft=Object.assign({},p);el('brushThumbnailHelp').hidden=!(p.type==='brush'||p.type==='tool'&&p.tool==='paintbrushTool');el('contextKey').value=p.shortcut||'';el('contextColor').value=p.background;el('contextAppearance').value=['icon','stroke','image'].indexOf(p.appearance)>=0?p.appearance:'icon';el('shortcutInfo').textContent='';el('contextWidth').disabled=store.state.settings.locked;el('contextHeight').disabled=store.state.settings.locked;el('contextWidth').value=p.width;el('contextHeight').value=p.height;updateImage();el('contextMenu').hidden=false;el('contextClose').focus();};
       button.onmousedown=function(e){startGesture(e,p,tile);};
-      button.onkeydown=function(e){if(e.altKey&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){e.preventDefault();attempt(function(){store.move(p.id,e.key==='ArrowLeft'?-1:1);render();});}};
+      button.onkeydown=function(e){if(e.key==='ContextMenu'||e.shiftKey&&e.key==='F10'){button.oncontextmenu(e);return;}if(e.altKey&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){e.preventDefault();attempt(function(){store.move(p.id,e.key==='ArrowLeft'?-1:1);render();});}};
       tile.appendChild(button);
       if(!store.state.settings.locked)["nw","ne","sw","se"].forEach(function(corner){var handle=makeButton("","Arraste para redimensionar "+p.name);handle.className="resizeHandle "+corner;handle.setAttribute("aria-label","Redimensionar "+p.name+" "+corner);handle.onmousedown=function(e){startGesture(e,p,tile,corner);};handle.onclick=function(e){e.stopPropagation();};handle.onkeydown=function(e){if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].indexOf(e.key)<0)return;e.preventDefault();attempt(function(){store.save(Object.assign({},p,{width:Math.max(48,Math.min(640,p.width+(e.key==="ArrowLeft"?-8:e.key==="ArrowRight"?8:0))),height:Math.max(24,Math.min(480,p.height+(e.key==="ArrowUp"?-8:e.key==="ArrowDown"?8:0)))}));render();});};tile.appendChild(handle);});
       
@@ -174,8 +174,18 @@
   el('settingsToggle').onclick=function(){settings(el('settingsDrawer').hidden);};el('settingsClose').onclick=function(){settings(false);};
   el('library').onclick=function(){el('options').hidden=!el('options').hidden;};
   ['showNames','preserveSize'].forEach(function(id){el(id).onchange=function(){attempt(function(){var settings={};settings[id]=el(id).checked;store.settings(settings);render();});};});
+  var pendingRestore=null;var recoveryKey=core.KEY+'.beforeRestore';
+  function previewRestore(raw){var data=core.parse(raw);pendingRestore=core.encodeDocument(data);el('restoreSummary').textContent=data.presets.length+' botões em '+data.shelves.length+' abas. A biblioteca atual será substituída; uma cópia de recuperação será preservada neste computador.';el('restorePreview').hidden=false;el('confirmRestore').focus();}
+  function restoreLibrary(raw){core.parse(raw);localStorage.setItem(recoveryKey,store.export());store.import(raw);selected=[];render();}
+  el('saveBackup').onclick=async function(){if(busy)return;setBusy(true);try{var result=await host.saveBackup(store.export());el('backupStatus').textContent=result?'Backup salvo: '+result.name:'Salvamento cancelado.';}catch(e){el('backupStatus').textContent=e.message;}finally{setBusy(false);}};
+  el('loadBackup').onclick=async function(){if(busy)return;setBusy(true);try{var result=await host.readBackup();if(result)previewRestore(result.data);else el('backupStatus').textContent='Restauração cancelada.';}catch(e){el('backupStatus').textContent=e.message;}finally{setBusy(false);}};
+  el('confirmRestore').onclick=function(){attempt(function(){if(!pendingRestore)return;restoreLibrary(pendingRestore);pendingRestore=null;el('restorePreview').hidden=true;el('backupStatus').textContent='Biblioteca restaurada.';});};
+  el('cancelRestore').onclick=function(){pendingRestore=null;el('restorePreview').hidden=true;};
+  el('recoverBackup').onclick=function(){attempt(function(){var raw=localStorage.getItem(recoveryKey);if(!raw)throw Error('Ainda não há uma biblioteca anterior para recuperar.');previewRestore(raw);});};
+  el('thumbnailPaste').addEventListener('paste',function(e){if(!draft)return;var items=e.clipboardData&&e.clipboardData.items;if(!items)return;for(var i=0;i<items.length;i++){if(items[i].type.indexOf('image/')!==0)continue;e.preventDefault();var file=items[i].getAsFile();if(!file||file.size>250000){message('Recorte apenas a miniatura (até 250 KB).',true);return;}var target=draft,reader=new FileReader();reader.onload=function(){if(draft!==target)return;try{core.validate(Object.assign({},draft,{image:reader.result,appearance:'image'}));draft.image=reader.result;el('contextAppearance').value='image';updateImage();el('thumbnailPaste').textContent='Miniatura colada. Clique em Salvar aparência.';}catch(error){message(error.message,true);}};reader.readAsDataURL(file);return;}message('Copie uma imagem para colar a miniatura.',true);});
+  document.addEventListener('keydown',function(e){if(e.key!=='Escape')return;['contextMenu','editor','macroChooser','settingsDrawer'].some(function(id){if(el(id).hidden)return false;el(id).hidden=true;el('capture').focus();e.preventDefault();return true;});});
   el('export').onclick=function(){el('backupText').value=store.export();message('Backup pronto. Copie o texto e salve em um arquivo.');};
-  el('import').onclick=function(){attempt(function(){store.import(el('backupText').value);selected=[];close();render();message('Biblioteca importada. Você pode desfazer.');});};
+  el('import').onclick=function(){attempt(function(){previewRestore(el('backupText').value);});};
   el('board').oncontextmenu=function(e){e.preventDefault();};
   el('copyEmail').onclick=async function(){var email='jdantanna@protonmail.com';function fallback(){var area=document.createElement('textarea');area.value=email;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);try{area.select();if(!document.execCommand('copy'))throw Error('Não foi possível copiar.');}finally{document.body.removeChild(area);}}try{var clipboard=navigator.clipboard;if(clipboard&&clipboard.setContent)await clipboard.setContent({'text/plain':email});else if(clipboard&&clipboard.writeText){try{await clipboard.writeText(email);}catch(error){fallback();}}else fallback();el('copyEmail').title='Endereço copiado';el('copyEmail').setAttribute('aria-label','Endereço copiado: '+email);el('copyEmail').textContent='Copiado!';setTimeout(function(){el('copyEmail').textContent=email;},1800);message('E-mail copiado.');}catch(e){message('Não foi possível copiar o e-mail: '+e.message,true);}};
   render();

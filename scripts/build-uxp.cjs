@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const target = path.join(root, 'dist', 'photoshop2024', 'PINTAKOMEOPINTO');
-const files = ['manifest.json', 'index.html', 'style.css', 'icon.svg', 'src/core.js', 'src/host.js', 'src/ui.js'];
+const files = ['manifest.json', 'index.html', 'style.css', 'icon.svg', 'src/core.js', 'src/host.js', 'src/ui.js', 'src/updater.js'];
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
 if (manifest.host.app !== 'PS' || manifest.main !== 'index.html') throw Error('Manifesto Photoshop inválido.');
 for (const file of files) {
